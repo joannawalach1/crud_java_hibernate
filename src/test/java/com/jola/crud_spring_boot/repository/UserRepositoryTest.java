@@ -9,20 +9,21 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-class UserRepositoryImplTest {
+class UserRepositoryTest {
 
     @Autowired
-    private UserRepositoryImpl userRepositoryImpl;
+    private UserRepository userRepository;
 
     @Test
     public void addNew() {
         User user = new User("user1@op.pl", "password1", "Anna", "Nowak");
-        userRepositoryImpl.save(user);
+        userRepository.save(user);
         assertNotNull(user);
         assertEquals("Anna", user.getFirstName());
     }
@@ -38,37 +39,42 @@ class UserRepositoryImplTest {
 
     @Test
     void findById() {
-        User user = new User("user1@op.pl", "password1", "Anna", "Nowak");
-        userRepositoryImpl.save(user);
+        User user = new User("user2@op.pl", "password1", "Anna", "Nowak");
+        userRepository.save(user);
         int id = user.getId();
-        User foundUser = userRepositoryImpl.findById(id);
+        Optional<User> foundUser = userRepository.findById(id);
 
         assertNotNull(foundUser);
-        assertEquals("Anna", user.getFirstName());
+        assertEquals("Anna", foundUser.get().getFirstName());
     }
 
     @Test
     void findAll() {
-        List<User> users =
+        Iterable<User> users = userRepository.findAll();
+        assertNotNull(users);
+        assertFalse(users.spliterator().estimateSize() == 0, "Lista użytkowników nie powinna być pusta");
+        assertTrue(users.iterator().hasNext(), "Lista użytkowników powinna zawierać przynajmniej jeden element");
     }
 
     @Test
     void count() {
+        userRepository.save(new User("user3@op.pl", "password3", "Anna", "Nowak"));
+        userRepository.save(new User("user4@op.pl", "password4", "Jan", "Kowalski"));
+        long count = userRepository.count();
+        assertEquals(2, count);
     }
 
     @Test
     void deleteById() {
-    }
-
-    @Test
-    void delete() {
+        User save = userRepository.save(new User("use5@op.pl", "password3", "Anna", "Nowak"));
+        int userId = save.getId();
+        userRepository.deleteById(userId);
+        assertFalse(userRepository.findById(userId).isPresent());
     }
 
     @Test
     void deleteAll() {
-    }
-
-    @Test
-    void testDeleteAll() {
+        userRepository.deleteAll();
+        assertEquals(0, userRepository.count());
     }
 }
